@@ -16,3 +16,7 @@
 /Build
 /.vs
 /obj
+/UnityPackageManager
+/ProjectSettings
+/app-store.plist
+/ad-hoc.plist
