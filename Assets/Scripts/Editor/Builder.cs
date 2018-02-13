@@ -6,7 +6,10 @@ using System.IO;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+
+#if UNITY_2018
 using UnityEditor.Build.Reporting;
+#endif
 
 #region 빌드옵션 예시 및 설명
 //BuildOptions.None									// 옵션 없이 빌드합니다.
@@ -28,17 +31,6 @@ using UnityEditor.Build.Reporting;
 
 namespace LofleEditor
 {
-	public partial class IOSInfo
-	{
-		public static string AppleDeveloperTeamID { get { return "XXXXXXXXXX"; } }
-	}
-
-	public partial class AndroidInfo
-	{
-		public static string KeystorePass { get { return "KEY_STOREPASS"; } }
-		public static string KeyaliasPass { get { return "KEY_ALIASPASS"; } }
-	}
-
 	/// <summary>
 	/// 빌드 자동화 기본 클래스
 	/// </summary>
@@ -100,12 +92,13 @@ namespace LofleEditor
 
 				private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
 				{
-					CheckVersion();
+					CheckCommandLine();
 
 					EditorUserBuildSettings.SwitchActiveBuildTarget( buildTargetGroup, buildTarget );
 
 					// 2018부터 BuildReport로 리턴하도록 변경 됨
-					BuildReport buildReport = BuildPipeline.BuildPlayer( scenes, targetPath, buildTarget, build_options );
+					var buildReport = BuildPipeline.BuildPlayer( scenes, targetPath, buildTarget, build_options );
+#if UNITY_2018
 					Debug.LogFormat( "Result : {0}", buildReport.summary.result );
 
 					StringBuilder log = new StringBuilder();
@@ -132,30 +125,60 @@ namespace LofleEditor
 					log.AppendFormat( "BuildEndedAt : {0}\n", buildReport.summary.buildEndedAt.ToLongDateString() );
 					log.AppendFormat( "TotalErrors : {0}\n", buildReport.summary.totalErrors.ToString() );
 					log.AppendFormat( "TotalWarnings : {0}\n", buildReport.summary.totalWarnings.ToString() );
-
 					Debug.Log( log );
+#else
+					Debug.LogFormat( "Result : {0}", buildReport );
+#endif
 				}
 
-				private static void CheckVersion()
+				private static void CheckCommandLine()
 				{
 					var args = Environment.GetCommandLineArgs();
-
 					if( null != args )
 					{
 						for( int i = 0; i < args.Length; i++ )
 						{
-							int buildNumber = 0;
-							if( "-buildNumber" == args[i] && i + 1 < args.Length && int.TryParse( args[i + 1], out buildNumber ) )
+							string arg = args[i];
+							if( i + 1 < args.Length )
 							{
-								string bundleVersion = PlayerSettings.bundleVersion;
+								string argValue = args[i + 1];
+								switch( arg.ToLower() )
+								{
+									case "-buildnumber":
+										{
+											int buildNumber = 0;
+											if( int.TryParse( argValue, out buildNumber ) )
+											{
+												string bundleVersion = PlayerSettings.bundleVersion;
 
-								PlayerSettings.Android.bundleVersionCode = buildNumber;
-								PlayerSettings.iOS.buildNumber = PlayerSettings.Android.bundleVersionCode.ToString();
-#if UNITY_ANDROID
-						PlayerSettings.bundleVersion = bundleVersion + "." + buildNumber;//+ "."+ PlayerSettings.Android.bundleVersionCode;
-#elif UNITY_IOS
-						PlayerSettings.bundleVersion = bundleVersion + "." + buildNumber;
-#endif
+												PlayerSettings.Android.bundleVersionCode = buildNumber;
+												PlayerSettings.iOS.buildNumber = PlayerSettings.Android.bundleVersionCode.ToString();
+												PlayerSettings.bundleVersion = string.Format( "{0}.{1}", bundleVersion, buildNumber );
+											}
+										}
+										break;
+
+									case "-appledeveloperteamid":
+										{
+											// https://developer.apple.com/account/#/membership/r
+
+											// 5.4.3부터 애플 teamID를 설정하여야 함, 안하면 xcode 프로젝트 파일에 teamID가 세팅되어 있지 않음
+											PlayerSettings.iOS.appleDeveloperTeamID = argValue;
+										}
+										break;
+
+									case "-keystorepass":
+										{
+											PlayerSettings.Android.keystorePass = argValue;
+										}
+										break;
+
+									case "-keyaliaspass":
+										{
+											PlayerSettings.Android.keyaliasPass = argValue;
+										}
+										break;
+								}
 							}
 						}
 					}
@@ -167,10 +190,6 @@ namespace LofleEditor
 				[MenuItem( Constant.Menu._BUILD_IOS )]
 				private static void InvokeBuildIOS()
 				{
-					// https://developer.apple.com/account/#/membership/r
-
-					// 5.4.3부터 애플 teamID를 설정하여야 함, 안하면 xcode 프로젝트 파일에 teamID가 세팅되어 있지 않음
-					PlayerSettings.iOS.appleDeveloperTeamID = IOSInfo.AppleDeveloperTeamID;
 					BuildOptions option = BuildOptions.None;
 
 					PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
@@ -209,9 +228,6 @@ namespace LofleEditor
 				private static void InvokeBuildAndroid()
 				{
 					BuildOptions option = BuildOptions.None;
-
-					PlayerSettings.Android.keystorePass = AndroidInfo.KeystorePass;
-					PlayerSettings.Android.keyaliasPass = AndroidInfo.KeyaliasPass;
 
 					InvokeBuild( FindEnabledEditorScenes(), Constant.Build.BuildTargetPathAndroid, BuildTargetGroup.Android, BuildTarget.Android, option );
 				}
