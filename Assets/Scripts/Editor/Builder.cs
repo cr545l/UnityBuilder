@@ -94,7 +94,7 @@ namespace LofleEditor
 
 		private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
 		{
-			CheckCommandLine();
+			CheckCommandLine( buildTargetGroup );
 
 			EditorUserBuildSettings.SwitchActiveBuildTarget( buildTargetGroup, buildTarget );
 			var buildReport = BuildPipeline.BuildPlayer( scenes, targetPath, buildTarget, build_options );
@@ -129,7 +129,7 @@ namespace LofleEditor
 			//Debug.Log( log );
 		}
 
-		private static void CheckCommandLine()
+		private static void CheckCommandLine( BuildTargetGroup buildTargetGroup )
 		{
 			var args = Environment.GetCommandLineArgs();
 			if( null != args )
@@ -145,6 +145,7 @@ namespace LofleEditor
 							case "-bundleIdentifier":
 								{
 									PlayerSettings.applicationIdentifier = argValue;
+									PlayerSettings.SetApplicationIdentifier( buildTargetGroup, argValue );
 								}
 								break;
 
