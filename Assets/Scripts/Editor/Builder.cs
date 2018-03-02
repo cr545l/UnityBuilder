@@ -38,7 +38,7 @@ namespace Com2usEditor
 	{
 		public class Constant
 		{
-			public const string COM2US = "COM2US";
+			public const string COM2US = "Com2us";
 
 			public class Path
 			{
