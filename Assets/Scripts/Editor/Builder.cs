@@ -162,6 +162,12 @@ namespace LofleEditor
 								}
 								break;
 
+							case "-iOSManualProvisioningProfileID":
+								{
+									PlayerSettings.iOS.iOSManualProvisioningProfileID = argValue;
+								}
+								break;
+
 							case "-keystorepass":
 								{
 									PlayerSettings.Android.keystorePass = argValue;
