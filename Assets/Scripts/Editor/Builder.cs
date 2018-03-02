@@ -29,7 +29,7 @@ using UnityEditor.Build.Reporting;
 //BuildOptions.ForceOptimizeScriptCompilation		// Force full optimizations for script complilation in Development builds.
 #endregion
 
-namespace LofleEditor
+namespace Com2usEditor
 {
 	/// <summary>
 	/// 빌드 자동화 기본 클래스
@@ -38,7 +38,7 @@ namespace LofleEditor
 	{
 		public class Constant
 		{
-			public const string _LOFLE = "Lofle";
+			public const string COM2US = "COM2US";
 
 			public class Path
 			{
@@ -65,8 +65,8 @@ namespace LofleEditor
 				private const string _IOS = "/iOS";
 				private const string _ANDROID = "/Android";
 
-				public const string _BUILD_IOS = _LOFLE + _BUILD + _IOS;
-				public const string _BUILD_ANDROID = _LOFLE + _BUILD + _ANDROID;
+				public const string BUILD_IOS = COM2US + _BUILD + _IOS;
+				public const string BUILD_ANDROID = COM2US + _BUILD + _ANDROID;
 			}
 
 			public class Build
@@ -187,7 +187,7 @@ namespace LofleEditor
 				/// <summary>
 				/// iOS 빌드용 기능
 				/// </summary>
-				[MenuItem( Constant.Menu._BUILD_IOS )]
+				[MenuItem( Constant.Menu.BUILD_IOS )]
 				private static void InvokeBuildIOS()
 				{
 					BuildOptions option = BuildOptions.None;
@@ -224,7 +224,7 @@ namespace LofleEditor
 				/// <summary>
 				/// Android 빌드용 기능
 				/// </summary>
-				[MenuItem( Constant.Menu._BUILD_ANDROID )]
+				[MenuItem( Constant.Menu.BUILD_ANDROID )]
 				private static void InvokeBuildAndroid()
 				{
 					BuildOptions option = BuildOptions.None;
