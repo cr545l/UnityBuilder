@@ -142,6 +142,12 @@ namespace LofleEditor
 						string argValue = args[i + 1];
 						switch( arg.ToLower() )
 						{
+							case "-bundleIdentifier":
+								{
+									PlayerSettings.applicationIdentifier = argValue;
+								}
+								break;
+
 							case "-buildnumber":
 								{
 									int buildNumber = 0;
