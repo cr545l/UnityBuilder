@@ -47,7 +47,7 @@ namespace LofleEditor
 				/// </summary>
 				public static string Separator { get { return System.IO.Path.DirectorySeparatorChar.ToString(); } }
 				public static string Project { get { return System.IO.Path.GetFullPath( "." ) + Separator; } }
-				public static string Plist { get { return Build.BuildTargetPathIOS + FileName.Plist; } }
+				public static string XcodeProjectPlist { get { return Build.BuildTargetPathIOS + FileName.XcodeProjectPlist; } }
 			}
 
 			public class FileName
@@ -56,14 +56,26 @@ namespace LofleEditor
 				private const string _PLIST = "Info.plist";
 
 				public static string Apk { get { return Path.Separator + _APK; } }
-				public static string Plist { get { return Path.Separator + _PLIST; } }
+				public static string XcodeProjectPlist { get { return Path.Separator + _PLIST; } }
 			}
 
 			public class Menu
 			{
 				private const string _BUILD = "/Build";
+				private const string _PLIST = "/Plist";
+
+				private const string _ADHOC = "/Ad Hoc";
+				private const string _APPSTORE = "/App Store";
+				private const string _ENTERPRISE = "/Enterprise";
+				private const string _DEVELOPMENT = "/Development";
+
 				private const string _IOS = "/iOS";
 				private const string _ANDROID = "/Android";
+
+				public const string _PLIST_ADHOC = _LOFLE + _PLIST + _ADHOC;
+				public const string _PLIST_APPSTORE = _LOFLE + _PLIST + _APPSTORE;
+				public const string _PLIST_ENTERPRISE = _LOFLE + _PLIST + _ENTERPRISE;
+				public const string _PLIST_DEVELOPMENT = _LOFLE + _PLIST + _DEVELOPMENT;
 
 				public const string _BUILD_IOS = _LOFLE + _BUILD + _IOS;
 				public const string _BUILD_ANDROID = _LOFLE + _BUILD + _ANDROID;
@@ -71,8 +83,32 @@ namespace LofleEditor
 
 			public class Build
 			{
+				private enum ePlistMethod
+				{
+					App_store,
+					Enterprise,
+					Ad_hoc,
+					Development
+				}
+
 				private const string _DIRECTORY_NAME_ANDROID = "apk";
 				private const string _DIRECTORY_NAME_IOS = "ios";
+
+				private class Plist
+				{
+					public const string APPSTORE = "app-store";
+					public const string ENTERPRISE = "enterprise";
+					public const string ADHOC = "ad-hoc";
+					public const string DEVELOPMENT = "development";
+				}
+
+				private static readonly Dictionary<ePlistMethod, string> _plistMethodStrings = new Dictionary<ePlistMethod, string>()
+				{
+					{ ePlistMethod.App_store,Plist.APPSTORE },
+					{ ePlistMethod.Enterprise, Plist.ENTERPRISE },
+					{ ePlistMethod.Ad_hoc, Plist.ADHOC },
+					{ ePlistMethod.Development, Plist.DEVELOPMENT },
+				};
 
 				public static string BuildTargetPathAndroid { get { return Path.Project + _DIRECTORY_NAME_ANDROID + FileName.Apk; } }
 				public static string BuildTargetPathIOS { get { return Path.Project + _DIRECTORY_NAME_IOS; } }
@@ -92,8 +128,6 @@ namespace LofleEditor
 
 				private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
 				{
-					CheckCommandLine( buildTargetGroup );
-
 					EditorUserBuildSettings.SwitchActiveBuildTarget( buildTargetGroup, buildTarget );
 
 					// 2018부터 BuildReport로 리턴하도록 변경 됨
@@ -177,6 +211,15 @@ namespace LofleEditor
 										}
 										break;
 
+									case "-autoPlist":
+										{
+											foreach( ePlistMethod plistMethod in Enum.GetValues( typeof( ePlistMethod ) ) )
+											{
+												CreateExportPlist( plistMethod );
+											}
+										}
+										break;
+
 									case "-keystorepass":
 										{
 											PlayerSettings.Android.keystorePass = argValue;
@@ -193,6 +236,72 @@ namespace LofleEditor
 						}
 					}
 				}
+#if UNITY_IOS
+				private static void CreateXcodeProjectPlist()
+				{
+					UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
+
+					if( File.Exists( Path.XcodeProjectPlist ) )
+					{
+						plist.ReadFromFile( Path.XcodeProjectPlist );
+					}
+					else
+					{
+						plist.WriteToFile( Path.XcodeProjectPlist );
+					}
+
+					// '수출 규정 관련 문서가 누락됨' 방지 코드
+					plist.root.SetBoolean( "ITSAppUsesNonExemptEncryption", false );
+
+					plist.WriteToFile( Path.XcodeProjectPlist );
+				}
+
+				private static void CreateExportPlist( ePlistMethod type )
+				{
+					CreateExportPlist( _plistMethodStrings[type] );
+				}
+
+				private static void CreateExportPlist( string method )
+				{
+					string path = string.Format( "{0}{1}.plist", Path.Project, method );
+					UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
+
+					if( File.Exists( path ) )
+					{
+						File.Delete( path );
+					}
+
+					plist.root.SetString( "method", method );
+					plist.root.SetString( "teamID", PlayerSettings.iOS.appleDeveloperTeamID );
+					plist.root.SetBoolean( "compileBitcode", false );
+
+					plist.WriteToFile( path );
+				}
+
+				[MenuItem( Menu._PLIST_ADHOC )]
+				private static void CreateAdHocPlist()
+				{
+					CreateExportPlist( ePlistMethod.Ad_hoc );
+				}
+
+				[MenuItem( Menu._PLIST_APPSTORE )]
+				private static void CreateAppStorePlist()
+				{
+					CreateExportPlist( ePlistMethod.App_store );
+				}
+
+				[MenuItem( Menu._PLIST_ENTERPRISE )]
+				private static void CreateEnterprisePlist()
+				{
+					CreateExportPlist( ePlistMethod.Enterprise );
+				}
+
+				[MenuItem( Menu._PLIST_ENTERPRISE )]
+				private static void CreateDevelopmentPlist()
+				{
+					CreateExportPlist( ePlistMethod.Development );
+				}
+#endif
 
 				/// <summary>
 				/// iOS 빌드용 기능
@@ -200,6 +309,8 @@ namespace LofleEditor
 				[MenuItem( Constant.Menu._BUILD_IOS )]
 				private static void InvokeBuildIOS()
 				{
+					CheckCommandLine( BuildTargetGroup.iOS );
+
 					BuildOptions option = BuildOptions.None;
 
 					PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
@@ -209,25 +320,12 @@ namespace LofleEditor
 					// PlayerSettings.iOS.targetOSVersion = iOSTargetOSVersion.iOS_7_0;
 					PlayerSettings.statusBarHidden = true;
 
-					Directory.CreateDirectory( Constant.Build.BuildTargetPathIOS );
+					Directory.CreateDirectory( BuildTargetPathIOS );
 
-					InvokeBuild( FindEnabledEditorScenes(), Constant.Build.BuildTargetPathIOS, BuildTargetGroup.iOS, BuildTarget.iOS, option );
+					InvokeBuild( FindEnabledEditorScenes(), BuildTargetPathIOS, BuildTargetGroup.iOS, BuildTarget.iOS, option );
+
 #if UNITY_IOS
-					UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
-
-					if( File.Exists( Constant.Path.Plist ) )
-					{
-						plist.ReadFromFile( Constant.Path.Plist );
-					}
-					else
-					{
-						plist.WriteToFile( Constant.Path.Plist );
-					}
-
-					// '수출 규정 관련 문서가 누락됨' 방지 코드
-					plist.root.SetBoolean( "ITSAppUsesNonExemptEncryption", false );
-
-					plist.WriteToFile( Constant.Path.Plist );
+					CreateXcodeProjectPlist();
 #endif
 				}
 
@@ -237,9 +335,11 @@ namespace LofleEditor
 				[MenuItem( Constant.Menu._BUILD_ANDROID )]
 				private static void InvokeBuildAndroid()
 				{
+					CheckCommandLine( BuildTargetGroup.Android );
+
 					BuildOptions option = BuildOptions.None;
 
-					InvokeBuild( FindEnabledEditorScenes(), Constant.Build.BuildTargetPathAndroid, BuildTargetGroup.Android, BuildTarget.Android, option );
+					InvokeBuild( FindEnabledEditorScenes(), BuildTargetPathAndroid, BuildTargetGroup.Android, BuildTarget.Android, option );
 				}
 			}
 		}
