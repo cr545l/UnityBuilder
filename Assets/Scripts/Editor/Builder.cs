@@ -204,6 +204,7 @@ namespace LofleEditor
 
 							case "-appledeveloperteamid":
 								{
+									PlayerSettings.iOS.appleEnableAutomaticSigning = true;
 									PlayerSettings.iOS.appleDeveloperTeamID = argValue;
 								}
 								break;
