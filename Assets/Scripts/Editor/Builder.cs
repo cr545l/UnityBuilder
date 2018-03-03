@@ -232,7 +232,7 @@ namespace LofleEditor
 					{
 						switch( arg )
 						{
-							case "-autoPlist":
+							case "-createPlists":
 								{
 									CreatePlists();
 								}
