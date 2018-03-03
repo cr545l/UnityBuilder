@@ -188,7 +188,7 @@ namespace LofleEditor
 								}
 								break;
 
-							case "-buildnumber":
+							case "-buildNumber":
 								{
 									int buildNumber = 0;
 									if( int.TryParse( argValue, out buildNumber ) )
@@ -202,7 +202,7 @@ namespace LofleEditor
 								}
 								break;
 
-							case "-appledeveloperteamid":
+							case "-appleDeveloperTeamID":
 								{
 									PlayerSettings.iOS.appleEnableAutomaticSigning = true;
 									PlayerSettings.iOS.appleDeveloperTeamID = argValue;
@@ -215,13 +215,13 @@ namespace LofleEditor
 								}
 								break;
 
-							case "-keystorepass":
+							case "-keystorePass":
 								{
 									PlayerSettings.Android.keystorePass = argValue;
 								}
 								break;
 
-							case "-keyaliaspass":
+							case "-keyaliasPass":
 								{
 									PlayerSettings.Android.keyaliasPass = argValue;
 								}
