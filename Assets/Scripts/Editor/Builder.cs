@@ -64,6 +64,8 @@ namespace LofleEditor
 				private const string _BUILD = "/Build";
 				private const string _PLIST = "/Plist";
 
+				private const string _ALL = "/All";
+
 				private const string _ADHOC = "/Ad Hoc";
 				private const string _APPSTORE = "/App Store";
 				private const string _ENTERPRISE = "/Enterprise";
@@ -71,6 +73,8 @@ namespace LofleEditor
 
 				private const string _IOS = "/iOS";
 				private const string _ANDROID = "/Android";
+
+				public const string _PLIST_ALL = _LOFLE + _PLIST + _ALL;
 
 				public const string _PLIST_ADHOC = _LOFLE + _PLIST + _ADHOC;
 				public const string _PLIST_APPSTORE = _LOFLE + _PLIST + _APPSTORE;
@@ -176,7 +180,7 @@ namespace LofleEditor
 							if( i + 1 < args.Length )
 							{
 								string argValue = args[i + 1];
-								switch( arg.ToLower() )
+								switch( arg )
 								{
 									case "-bundleIdentifier":
 										{
@@ -211,15 +215,6 @@ namespace LofleEditor
 										}
 										break;
 
-									case "-autoPlist":
-										{
-											foreach( ePlistMethod plistMethod in Enum.GetValues( typeof( ePlistMethod ) ) )
-											{
-												CreateExportPlist( plistMethod );
-											}
-										}
-										break;
-
 									case "-keystorepass":
 										{
 											PlayerSettings.Android.keystorePass = argValue;
@@ -233,10 +228,21 @@ namespace LofleEditor
 										break;
 								}
 							}
+							else
+							{
+								switch( arg )
+								{
+									case "-autoPlist":
+										{
+											CreatePlists();
+										}
+										break;
+								}
+							}
 						}
 					}
 				}
-#if UNITY_IOS
+
 				private static void CreateXcodeProjectPlist()
 				{
 					UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
@@ -278,6 +284,15 @@ namespace LofleEditor
 					plist.WriteToFile( path );
 				}
 
+				[MenuItem( Menu._PLIST_ALL )]
+				private static void CreatePlists()
+				{
+					foreach( ePlistMethod plistMethod in Enum.GetValues( typeof( ePlistMethod ) ) )
+					{
+						CreateExportPlist( plistMethod );
+					}
+				}
+
 				[MenuItem( Menu._PLIST_ADHOC )]
 				private static void CreateAdHocPlist()
 				{
@@ -301,7 +316,6 @@ namespace LofleEditor
 				{
 					CreateExportPlist( ePlistMethod.Development );
 				}
-#endif
 
 				/// <summary>
 				/// iOS 빌드용 기능
@@ -323,10 +337,8 @@ namespace LofleEditor
 					Directory.CreateDirectory( BuildTargetPathIOS );
 
 					InvokeBuild( FindEnabledEditorScenes(), BuildTargetPathIOS, BuildTargetGroup.iOS, BuildTarget.iOS, option );
-
-#if UNITY_IOS
+					
 					CreateXcodeProjectPlist();
-#endif
 				}
 
 				/// <summary>
