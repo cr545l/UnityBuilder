@@ -47,7 +47,7 @@ namespace LofleEditor
 				/// </summary>
 				public static string Separator { get { return System.IO.Path.DirectorySeparatorChar.ToString(); } }
 				public static string Project { get { return System.IO.Path.GetFullPath( "." ) + Separator; } }
-				public static string XcodeProjectPlist { get { return Build.BuildTargetPathIOS + FileName.XcodeProjectPlist; } }
+				public static string XcodeProjectPlist { get { return BuildTargetPathIOS + FileName.XcodeProjectPlist; } }
 			}
 
 			public class FileName
@@ -85,57 +85,56 @@ namespace LofleEditor
 				public const string _BUILD_ANDROID = _LOFLE + _BUILD + _ANDROID;
 			}
 
-			public class Build
+			private const string _DIRECTORY_NAME_ANDROID = "apk";
+			private const string _DIRECTORY_NAME_IOS = "ios";
+
+			public class Plist
 			{
-				private enum ePlistMethod
-				{
-					App_store,
-					Enterprise,
-					Ad_hoc,
-					Development
-				}
+				public const string APPSTORE = "app-store";
+				public const string ENTERPRISE = "enterprise";
+				public const string ADHOC = "ad-hoc";
+				public const string DEVELOPMENT = "development";
+			}
 
-				private const string _DIRECTORY_NAME_ANDROID = "apk";
-				private const string _DIRECTORY_NAME_IOS = "ios";
+			public static string BuildTargetPathAndroid { get { return Path.Project + _DIRECTORY_NAME_ANDROID + FileName.Apk; } }
+			public static string BuildTargetPathIOS { get { return Path.Project + _DIRECTORY_NAME_IOS; } }
+		}
 
-				private class Plist
-				{
-					public const string APPSTORE = "app-store";
-					public const string ENTERPRISE = "enterprise";
-					public const string ADHOC = "ad-hoc";
-					public const string DEVELOPMENT = "development";
-				}
+		private enum ePlistMethod
+		{
+			App_store,
+			Enterprise,
+			Ad_hoc,
+			Development
+		}
 
-				private static readonly Dictionary<ePlistMethod, string> _plistMethodStrings = new Dictionary<ePlistMethod, string>()
+		private static readonly Dictionary<ePlistMethod, string> _plistMethodStrings = new Dictionary<ePlistMethod, string>()
 				{
-					{ ePlistMethod.App_store,Plist.APPSTORE },
-					{ ePlistMethod.Enterprise, Plist.ENTERPRISE },
-					{ ePlistMethod.Ad_hoc, Plist.ADHOC },
-					{ ePlistMethod.Development, Plist.DEVELOPMENT },
+					{ ePlistMethod.App_store, Constant.Plist.APPSTORE },
+					{ ePlistMethod.Enterprise, Constant.Plist.ENTERPRISE },
+					{ ePlistMethod.Ad_hoc, Constant.Plist.ADHOC },
+					{ ePlistMethod.Development, Constant.Plist.DEVELOPMENT },
 				};
 
-				public static string BuildTargetPathAndroid { get { return Path.Project + _DIRECTORY_NAME_ANDROID + FileName.Apk; } }
-				public static string BuildTargetPathIOS { get { return Path.Project + _DIRECTORY_NAME_IOS; } }
+		private static string[] FindEnabledEditorScenes()
+		{
+			List<string> EditorScenes = new List<string>();
+			foreach( EditorBuildSettingsScene scene in EditorBuildSettings.scenes )
+			{
+				if( !scene.enabled )
+					continue;
+				EditorScenes.Add( scene.path );
+			}
 
-				private static string[] FindEnabledEditorScenes()
-				{
-					List<string> EditorScenes = new List<string>();
-					foreach( EditorBuildSettingsScene scene in EditorBuildSettings.scenes )
-					{
-						if( !scene.enabled )
-							continue;
-						EditorScenes.Add( scene.path );
-					}
+			return EditorScenes.ToArray();
+		}
 
-					return EditorScenes.ToArray();
-				}
+		private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
+		{
+			EditorUserBuildSettings.SwitchActiveBuildTarget( buildTargetGroup, buildTarget );
 
-				private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
-				{
-					EditorUserBuildSettings.SwitchActiveBuildTarget( buildTargetGroup, buildTarget );
-
-					// 2018부터 BuildReport로 리턴하도록 변경 됨
-					var buildReport = BuildPipeline.BuildPlayer( scenes, targetPath, buildTarget, build_options );
+			// 2018부터 BuildReport로 리턴하도록 변경 됨
+			var buildReport = BuildPipeline.BuildPlayer( scenes, targetPath, buildTarget, build_options );
 #if UNITY_2018
 					Debug.LogFormat( "Result : {0}", buildReport.summary.result );
 
@@ -165,195 +164,193 @@ namespace LofleEditor
 					log.AppendFormat( "TotalWarnings : {0}\n", buildReport.summary.totalWarnings.ToString() );
 					Debug.Log( log );
 #else
-					Debug.LogFormat( "Result : {0}", buildReport );
+			Debug.LogFormat( "Result : {0}", buildReport );
 #endif
-				}
+		}
 
-				private static void CheckCommandLine( BuildTargetGroup buildTargetGroup )
+		private static void CheckCommandLine( BuildTargetGroup buildTargetGroup )
+		{
+			var args = Environment.GetCommandLineArgs();
+			if( null != args )
+			{
+				for( int i = 0; i < args.Length; i++ )
 				{
-					var args = Environment.GetCommandLineArgs();
-					if( null != args )
+					string arg = args[i];
+					if( i + 1 < args.Length )
 					{
-						for( int i = 0; i < args.Length; i++ )
+						string argValue = args[i + 1];
+						switch( arg )
 						{
-							string arg = args[i];
-							if( i + 1 < args.Length )
-							{
-								string argValue = args[i + 1];
-								switch( arg )
+							case "-bundleIdentifier":
 								{
-									case "-bundleIdentifier":
-										{
-											PlayerSettings.applicationIdentifier = argValue;
-											PlayerSettings.SetApplicationIdentifier( buildTargetGroup, argValue );
-										}
-										break;
-
-									case "-buildnumber":
-										{
-											int buildNumber = 0;
-											if( int.TryParse( argValue, out buildNumber ) )
-											{
-												string bundleVersion = PlayerSettings.bundleVersion;
-
-												PlayerSettings.Android.bundleVersionCode = buildNumber;
-												PlayerSettings.iOS.buildNumber = PlayerSettings.Android.bundleVersionCode.ToString();
-												PlayerSettings.bundleVersion = bundleVersion + "." + buildNumber;
-											}
-										}
-										break;
-
-									case "-appledeveloperteamid":
-										{
-											PlayerSettings.iOS.appleDeveloperTeamID = argValue;
-										}
-										break;
-
-									case "-iOSManualProvisioningProfileID":
-										{
-											PlayerSettings.iOS.iOSManualProvisioningProfileID = argValue;
-										}
-										break;
-
-									case "-keystorepass":
-										{
-											PlayerSettings.Android.keystorePass = argValue;
-										}
-										break;
-
-									case "-keyaliaspass":
-										{
-											PlayerSettings.Android.keyaliasPass = argValue;
-										}
-										break;
+									PlayerSettings.applicationIdentifier = argValue;
+									PlayerSettings.SetApplicationIdentifier( buildTargetGroup, argValue );
 								}
-							}
-							else
-							{
-								switch( arg )
+								break;
+
+							case "-buildnumber":
 								{
-									case "-autoPlist":
-										{
-											CreatePlists();
-										}
-										break;
+									int buildNumber = 0;
+									if( int.TryParse( argValue, out buildNumber ) )
+									{
+										string bundleVersion = PlayerSettings.bundleVersion;
+
+										PlayerSettings.Android.bundleVersionCode = buildNumber;
+										PlayerSettings.iOS.buildNumber = PlayerSettings.Android.bundleVersionCode.ToString();
+										PlayerSettings.bundleVersion = bundleVersion + "." + buildNumber;
+									}
 								}
-							}
+								break;
+
+							case "-appledeveloperteamid":
+								{
+									PlayerSettings.iOS.appleDeveloperTeamID = argValue;
+								}
+								break;
+
+							case "-iOSManualProvisioningProfileID":
+								{
+									PlayerSettings.iOS.iOSManualProvisioningProfileID = argValue;
+								}
+								break;
+
+							case "-keystorepass":
+								{
+									PlayerSettings.Android.keystorePass = argValue;
+								}
+								break;
+
+							case "-keyaliaspass":
+								{
+									PlayerSettings.Android.keyaliasPass = argValue;
+								}
+								break;
 						}
-					}
-				}
-
-				private static void CreateXcodeProjectPlist()
-				{
-					UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
-
-					if( File.Exists( Path.XcodeProjectPlist ) )
-					{
-						plist.ReadFromFile( Path.XcodeProjectPlist );
 					}
 					else
 					{
-						plist.WriteToFile( Path.XcodeProjectPlist );
+						switch( arg )
+						{
+							case "-autoPlist":
+								{
+									CreatePlists();
+								}
+								break;
+						}
 					}
-
-					// '수출 규정 관련 문서가 누락됨' 방지 코드
-					plist.root.SetBoolean( "ITSAppUsesNonExemptEncryption", false );
-
-					plist.WriteToFile( Path.XcodeProjectPlist );
-				}
-
-				private static void CreateExportPlist( ePlistMethod type )
-				{
-					CreateExportPlist( _plistMethodStrings[type] );
-				}
-
-				private static void CreateExportPlist( string method )
-				{
-					string path = string.Format( "{0}{1}.plist", Path.Project, method );
-					UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
-
-					if( File.Exists( path ) )
-					{
-						File.Delete( path );
-					}
-
-					plist.root.SetString( "method", method );
-					plist.root.SetString( "teamID", PlayerSettings.iOS.appleDeveloperTeamID );
-					plist.root.SetBoolean( "compileBitcode", false );
-
-					plist.WriteToFile( path );
-				}
-
-				[MenuItem( Menu._PLIST_ALL )]
-				private static void CreatePlists()
-				{
-					foreach( ePlistMethod plistMethod in Enum.GetValues( typeof( ePlistMethod ) ) )
-					{
-						CreateExportPlist( plistMethod );
-					}
-				}
-
-				[MenuItem( Menu._PLIST_ADHOC )]
-				private static void CreateAdHocPlist()
-				{
-					CreateExportPlist( ePlistMethod.Ad_hoc );
-				}
-
-				[MenuItem( Menu._PLIST_APPSTORE )]
-				private static void CreateAppStorePlist()
-				{
-					CreateExportPlist( ePlistMethod.App_store );
-				}
-
-				[MenuItem( Menu._PLIST_ENTERPRISE )]
-				private static void CreateEnterprisePlist()
-				{
-					CreateExportPlist( ePlistMethod.Enterprise );
-				}
-
-				[MenuItem( Menu._PLIST_ENTERPRISE )]
-				private static void CreateDevelopmentPlist()
-				{
-					CreateExportPlist( ePlistMethod.Development );
-				}
-
-				/// <summary>
-				/// iOS 빌드용 기능
-				/// </summary>
-				[MenuItem( Constant.Menu._BUILD_IOS )]
-				private static void InvokeBuildIOS()
-				{
-					CheckCommandLine( BuildTargetGroup.iOS );
-
-					BuildOptions option = BuildOptions.None;
-
-					PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
-
-					// https://docs.unity3d.com/550/Documentation/ScriptReference/PlayerSettings.iOS-targetOSVersionString.html
-					// 5.5b 부터 targetOSVersionString으로 변경됨. 비워두면 지원하는 최소 OS 버전으로 빌드
-					// PlayerSettings.iOS.targetOSVersion = iOSTargetOSVersion.iOS_7_0;
-					PlayerSettings.statusBarHidden = true;
-
-					Directory.CreateDirectory( BuildTargetPathIOS );
-
-					InvokeBuild( FindEnabledEditorScenes(), BuildTargetPathIOS, BuildTargetGroup.iOS, BuildTarget.iOS, option );
-					
-					CreateXcodeProjectPlist();
-				}
-
-				/// <summary>
-				/// Android 빌드용 기능
-				/// </summary>
-				[MenuItem( Constant.Menu._BUILD_ANDROID )]
-				private static void InvokeBuildAndroid()
-				{
-					CheckCommandLine( BuildTargetGroup.Android );
-
-					BuildOptions option = BuildOptions.None;
-
-					InvokeBuild( FindEnabledEditorScenes(), BuildTargetPathAndroid, BuildTargetGroup.Android, BuildTarget.Android, option );
 				}
 			}
+		}
+
+		private static void CreateXcodeProjectPlist()
+		{
+			UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
+
+			if( File.Exists( Constant.Path.XcodeProjectPlist ) )
+			{
+				plist.ReadFromFile( Constant.Path.XcodeProjectPlist );
+			}
+			else
+			{
+				plist.WriteToFile( Constant.Path.XcodeProjectPlist );
+			}
+
+			// '수출 규정 관련 문서가 누락됨' 방지 코드
+			plist.root.SetBoolean( "ITSAppUsesNonExemptEncryption", false );
+
+			plist.WriteToFile( Constant.Path.XcodeProjectPlist );
+		}
+
+		private static void CreateExportPlist( ePlistMethod type )
+		{
+			CreateExportPlist( _plistMethodStrings[type] );
+		}
+
+		private static void CreateExportPlist( string method )
+		{
+			string path = string.Format( "{0}{1}.plist", Constant.Path.Project, method );
+			UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
+
+			if( File.Exists( path ) )
+			{
+				File.Delete( path );
+			}
+
+			plist.root.SetString( "method", method );
+			plist.root.SetString( "teamID", PlayerSettings.iOS.appleDeveloperTeamID );
+			plist.root.SetBoolean( "compileBitcode", false );
+
+			plist.WriteToFile( path );
+		}
+
+		[MenuItem( Constant.Menu._PLIST_ALL )]
+		private static void CreatePlists()
+		{
+			foreach( ePlistMethod plistMethod in Enum.GetValues( typeof( ePlistMethod ) ) )
+			{
+				CreateExportPlist( plistMethod );
+			}
+		}
+
+		[MenuItem( Constant.Menu._PLIST_ADHOC )]
+		private static void CreateAdHocPlist()
+		{
+			CreateExportPlist( ePlistMethod.Ad_hoc );
+		}
+
+		[MenuItem( Constant.Menu._PLIST_APPSTORE )]
+		private static void CreateAppStorePlist()
+		{
+			CreateExportPlist( ePlistMethod.App_store );
+		}
+
+		[MenuItem( Constant.Menu._PLIST_ENTERPRISE )]
+		private static void CreateEnterprisePlist()
+		{
+			CreateExportPlist( ePlistMethod.Enterprise );
+		}
+
+		[MenuItem( Constant.Menu._PLIST_ENTERPRISE )]
+		private static void CreateDevelopmentPlist()
+		{
+			CreateExportPlist( ePlistMethod.Development );
+		}
+
+		/// <summary>
+		/// iOS 빌드용 기능
+		/// </summary>
+		[MenuItem( Constant.Menu._BUILD_IOS )]
+		private static void InvokeBuildIOS()
+		{
+			CheckCommandLine( BuildTargetGroup.iOS );
+
+			BuildOptions option = BuildOptions.None;
+
+			PlayerSettings.iOS.sdkVersion = iOSSdkVersion.DeviceSDK;
+
+			// https://docs.unity3d.com/550/Documentation/ScriptReference/PlayerSettings.iOS-targetOSVersionString.html
+			// 5.5b 부터 targetOSVersionString으로 변경됨. 비워두면 지원하는 최소 OS 버전으로 빌드
+			// PlayerSettings.iOS.targetOSVersion = iOSTargetOSVersion.iOS_7_0;
+			PlayerSettings.statusBarHidden = true;
+
+			Directory.CreateDirectory( Constant.BuildTargetPathIOS );
+
+			InvokeBuild( FindEnabledEditorScenes(), Constant.BuildTargetPathIOS, BuildTargetGroup.iOS, BuildTarget.iOS, option );
+
+			CreateXcodeProjectPlist();
+		}
+
+		/// <summary>
+		/// Android 빌드용 기능
+		/// </summary>
+		[MenuItem( Constant.Menu._BUILD_ANDROID )]
+		private static void InvokeBuildAndroid()
+		{
+			CheckCommandLine( BuildTargetGroup.Android );
+
+			BuildOptions option = BuildOptions.None;
+
+			InvokeBuild( FindEnabledEditorScenes(), Constant.BuildTargetPathAndroid, BuildTargetGroup.Android, BuildTarget.Android, option );
 		}
 	}
 }
