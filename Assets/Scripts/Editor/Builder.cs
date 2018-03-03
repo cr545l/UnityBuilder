@@ -92,7 +92,7 @@ namespace LofleEditor
 
 				private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
 				{
-					CheckCommandLine();
+					CheckCommandLine( buildTargetGroup );
 
 					EditorUserBuildSettings.SwitchActiveBuildTarget( buildTargetGroup, buildTarget );
 
@@ -131,7 +131,7 @@ namespace LofleEditor
 #endif
 				}
 
-				private static void CheckCommandLine()
+				private static void CheckCommandLine( BuildTargetGroup buildTargetGroup )
 				{
 					var args = Environment.GetCommandLineArgs();
 					if( null != args )
@@ -144,6 +144,13 @@ namespace LofleEditor
 								string argValue = args[i + 1];
 								switch( arg.ToLower() )
 								{
+									case "-bundleIdentifier":
+										{
+											PlayerSettings.applicationIdentifier = argValue;
+											PlayerSettings.SetApplicationIdentifier( buildTargetGroup, argValue );
+										}
+										break;
+
 									case "-buildnumber":
 										{
 											int buildNumber = 0;
@@ -153,17 +160,20 @@ namespace LofleEditor
 
 												PlayerSettings.Android.bundleVersionCode = buildNumber;
 												PlayerSettings.iOS.buildNumber = PlayerSettings.Android.bundleVersionCode.ToString();
-												PlayerSettings.bundleVersion = string.Format( "{0}.{1}", bundleVersion, buildNumber );
+												PlayerSettings.bundleVersion = bundleVersion + "." + buildNumber;
 											}
 										}
 										break;
 
 									case "-appledeveloperteamid":
 										{
-											// https://developer.apple.com/account/#/membership/r
-
-											// 5.4.3부터 애플 teamID를 설정하여야 함, 안하면 xcode 프로젝트 파일에 teamID가 세팅되어 있지 않음
 											PlayerSettings.iOS.appleDeveloperTeamID = argValue;
+										}
+										break;
+
+									case "-iOSManualProvisioningProfileID":
+										{
+											PlayerSettings.iOS.iOSManualProvisioningProfileID = argValue;
 										}
 										break;
 
