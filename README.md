@@ -9,5 +9,5 @@ Bash Shell
 Batch
 
 ``` bat
-"C:\Program Files\Unity\Editor\Unity.exe" -quit -batchmode -buildTarget "android" -projectPath "%CD%" -executeMethod "LofleEditor.Builder.InvokeBuildAndroid" -keystorePass KEYSTORE_PASSWORD -keyaliasPass KEYALIAS_PASSWORD
+"C:\Program Files\Unity\Editor\Unity.exe" -quit -batchmode -buildTarget "android" -projectPath "%CD%" -executeMethod "LofleEditor.Builder.InvokeBuildAndroid" -keystorePass KEYSTORE_PASSWORD -keyaliasPass KEYALIAS_PASSWORD -il2cpp
 ```
