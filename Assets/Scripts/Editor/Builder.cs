@@ -1,10 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
 
-using System;
-using System.IO;
-using System.Collections.Generic;
-
 #if UNITY_2018
 using UnityEditor.Build.Reporting;
 #endif
@@ -106,7 +102,7 @@ namespace LofleEditor
 			Development
 		}
 
-		private static readonly Dictionary<ePlistMethod, string> _plistMethodStrings = new Dictionary<ePlistMethod, string>()
+		private static readonly System.Collections.Generic.Dictionary<ePlistMethod, string> _plistMethodStrings = new System.Collections.Generic.Dictionary<ePlistMethod, string>()
 				{
 					{ ePlistMethod.App_store, Constant.Plist.APPSTORE },
 					{ ePlistMethod.Enterprise, Constant.Plist.ENTERPRISE },
@@ -116,15 +112,15 @@ namespace LofleEditor
 
 		private static string[] FindEnabledEditorScenes()
 		{
-			List<string> EditorScenes = new List<string>();
+			var editorScenes = new System.Collections.Generic.List<string>();
 			foreach( EditorBuildSettingsScene scene in EditorBuildSettings.scenes )
 			{
 				if( !scene.enabled )
 					continue;
-				EditorScenes.Add( scene.path );
+				editorScenes.Add( scene.path );
 			}
 
-			return EditorScenes.ToArray();
+			return editorScenes.ToArray();
 		}
 
 		private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
@@ -168,7 +164,7 @@ namespace LofleEditor
 
 		private static void CheckCommandLine( BuildTargetGroup buildTargetGroup )
 		{
-			var args = Environment.GetCommandLineArgs();
+			var args = System.Environment.GetCommandLineArgs();
 			if( null != args )
 			{
 				for( int i = 0; i < args.Length; i++ )
@@ -255,9 +251,9 @@ namespace LofleEditor
 
 		private static void CreateXcodeProjectPlist()
 		{
-			UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
+			var plist = new UnityEditor.iOS.Xcode.PlistDocument();
 
-			if( File.Exists( Constant.Path.XcodeProjectPlist ) )
+			if( System.IO.File.Exists( Constant.Path.XcodeProjectPlist ) )
 			{
 				plist.ReadFromFile( Constant.Path.XcodeProjectPlist );
 			}
@@ -280,11 +276,11 @@ namespace LofleEditor
 		private static void CreateExportPlist( string method )
 		{
 			string path = string.Format( "{0}{1}.plist", Constant.Path.Project, method );
-			UnityEditor.iOS.Xcode.PlistDocument plist = new UnityEditor.iOS.Xcode.PlistDocument();
+			var plist = new UnityEditor.iOS.Xcode.PlistDocument();
 
-			if( File.Exists( path ) )
+			if( System.IO.File.Exists( path ) )
 			{
-				File.Delete( path );
+				System.IO.File.Delete( path );
 			}
 
 			plist.root.SetString( "method", method );
@@ -297,7 +293,7 @@ namespace LofleEditor
 		[MenuItem( Constant.Menu._PLIST_ALL )]
 		private static void CreatePlists()
 		{
-			foreach( ePlistMethod plistMethod in Enum.GetValues( typeof( ePlistMethod ) ) )
+			foreach( ePlistMethod plistMethod in System.Enum.GetValues( typeof( ePlistMethod ) ) )
 			{
 				CreateExportPlist( plistMethod );
 			}
@@ -344,7 +340,7 @@ namespace LofleEditor
 			// PlayerSettings.iOS.targetOSVersion = iOSTargetOSVersion.iOS_7_0;
 			PlayerSettings.statusBarHidden = true;
 
-			Directory.CreateDirectory( Constant.BuildTargetPathIOS );
+			System.IO.Directory.CreateDirectory( Constant.BuildTargetPathIOS );
 
 			InvokeBuild( FindEnabledEditorScenes(), Constant.BuildTargetPathIOS, BuildTargetGroup.iOS, BuildTarget.iOS, option );
 
