@@ -237,6 +237,18 @@ namespace LofleEditor
 									CreatePlists();
 								}
 								break;
+
+							case "-mono":
+								{
+									PlayerSettings.SetScriptingBackend( buildTargetGroup, ScriptingImplementation.Mono2x );
+								}
+								break;
+
+							case "-il2cpp":
+								{
+									PlayerSettings.SetScriptingBackend( buildTargetGroup, ScriptingImplementation.IL2CPP );
+								}
+								break;
 						}
 					}
 				}
