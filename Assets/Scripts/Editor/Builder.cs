@@ -4,8 +4,6 @@ using UnityEditor;
 using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 
 #if UNITY_2018
 using UnityEditor.Build.Reporting;
