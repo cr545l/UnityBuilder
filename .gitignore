@@ -20,3 +20,5 @@
 /ProjectSettings
 /app-store.plist
 /ad-hoc.plist
+development.plist
+enterprise.plist
