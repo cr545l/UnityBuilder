@@ -130,35 +130,39 @@ namespace LofleEditor
 			// 2018부터 BuildReport로 리턴하도록 변경 됨
 			var buildReport = BuildPipeline.BuildPlayer( scenes, targetPath, buildTarget, build_options );
 #if UNITY_2018
-					Debug.LogFormat( "Result : {0}", buildReport.summary.result );
+			Debug.LogFormat( "Result : {0}", buildReport.summary.result );
 
-					StringBuilder log = new StringBuilder();
+			StringBuilder log = new StringBuilder();
 
-					log.AppendLine( "BuildResult.files" );
-					foreach( var i in buildReport.files )
-					{
-						log.AppendFormat( "	{0}\n", i.ToString() );
-					}
-					log.AppendLine();
+			log.AppendLine( "BuildResult.files" );
+			foreach( var i in buildReport.files )
+			{
+				log.AppendFormat( "	{0}\n", i.ToString() );
+			}
+			log.AppendLine();
 
-					log.AppendLine( "BuildResult.steps" );
-					foreach( var i in buildReport.steps )
-					{
-						log.AppendFormat( "	{0}\n", i.ToString() );
-					}
-					log.AppendLine();
+			log.AppendLine( "BuildResult.steps" );
+			foreach( var i in buildReport.steps )
+			{
+				log.AppendFormat( "	{0}\n", i.ToString() );
+			}
+			log.AppendLine();
 
-					log.AppendFormat( "Guid : {0}\n", buildReport.summary.guid.ToString() );
-					log.AppendFormat( "OutputPath : {0}\n", buildReport.summary.outputPath );
-					log.AppendFormat( "TotalSize : {0}\n", buildReport.summary.totalSize.ToString() );
-					log.AppendFormat( "TotalTime : {0}\n", buildReport.summary.totalTime.ToString() );
-					log.AppendFormat( "BuildStartedAt : {0}\n", buildReport.summary.buildStartedAt.ToLongDateString() );
-					log.AppendFormat( "BuildEndedAt : {0}\n", buildReport.summary.buildEndedAt.ToLongDateString() );
-					log.AppendFormat( "TotalErrors : {0}\n", buildReport.summary.totalErrors.ToString() );
-					log.AppendFormat( "TotalWarnings : {0}\n", buildReport.summary.totalWarnings.ToString() );
-					Debug.Log( log );
+			log.AppendFormat( "Guid : {0}\n", buildReport.summary.guid.ToString() );
+			log.AppendFormat( "OutputPath : {0}\n", buildReport.summary.outputPath );
+			log.AppendFormat( "TotalSize : {0}\n", buildReport.summary.totalSize.ToString() );
+			log.AppendFormat( "TotalTime : {0}\n", buildReport.summary.totalTime.ToString() );
+			log.AppendFormat( "BuildStartedAt : {0}\n", buildReport.summary.buildStartedAt.ToLongDateString() );
+			log.AppendFormat( "BuildEndedAt : {0}\n", buildReport.summary.buildEndedAt.ToLongDateString() );
+			log.AppendFormat( "TotalErrors : {0}\n", buildReport.summary.totalErrors.ToString() );
+			log.AppendFormat( "TotalWarnings : {0}\n", buildReport.summary.totalWarnings.ToString() );
+			Debug.Log( log );
 #else
 			Debug.LogFormat( "Result : {0}", buildReport );
+			if( null != buildReport )
+			{
+				throw new System.Exception( buildReport );
+			}
 #endif
 		}
 
