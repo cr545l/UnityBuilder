@@ -158,7 +158,7 @@ namespace LofleEditor
 			log.AppendFormat( "TotalWarnings : {0}\n", buildReport.summary.totalWarnings.ToString() );
 			Debug.Log( log );
 #else
-			Debug.LogFormat( "Result : {0}", buildReport );
+			Debug.LogFormat( "Result : {0}", buildReport.ToString() );
 			if( null != buildReport )
 			{
 				throw new System.Exception( buildReport );
