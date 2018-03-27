@@ -159,7 +159,7 @@ namespace LofleEditor
 			Debug.Log( log );
 #else
 			Debug.LogFormat( "Result : {0}", buildReport.ToString() );
-			if( null != buildReport )
+			if( string.Empty != buildReport )
 			{
 				throw new System.Exception( buildReport );
 			}
