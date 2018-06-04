@@ -159,7 +159,7 @@ namespace LofleEditor
 			Debug.Log( log );
 #else
 			Debug.LogFormat( "Result : {0}", buildReport.ToString() );
-			if( string.Empty != buildReport )
+			if( null != buildReport )
 			{
 				throw new System.Exception( buildReport );
 			}
@@ -213,9 +213,21 @@ namespace LofleEditor
 								}
 								break;
 
+							case "-keystoreName":
+								{
+									PlayerSettings.Android.keystoreName = argValue;
+								}
+								break;
+
 							case "-keystorePass":
 								{
 									PlayerSettings.Android.keystorePass = argValue;
+								}
+								break;
+
+							case "-keyaliasName":
+								{
+									PlayerSettings.Android.keyaliasName = argValue;
 								}
 								break;
 
