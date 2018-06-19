@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEditor;
+using System.Text;
 
 #if UNITY_2018
 using UnityEditor.Build.Reporting;
