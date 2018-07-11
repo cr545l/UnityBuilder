@@ -232,9 +232,21 @@ namespace LofleEditor
 								}
 								break;
 
-							case "-keyaliasPass":
+							case "-AndroidSdkRoot":
 								{
-									PlayerSettings.Android.keyaliasPass = argValue;
+									EditorPrefs.SetString( "AndroidSdkRoot", argValue );
+								}
+								break;
+
+							case "-AndroidNdkRoot":
+								{
+									EditorPrefs.SetString( "AndroidNdkRoot", argValue );
+								}
+								break;
+
+							case "-JdkPath":
+								{
+									EditorPrefs.SetString( "JdkPath", argValue );
 								}
 								break;
 						}
