@@ -271,7 +271,7 @@ namespace LofleEditor
 											string key = keyValue[0];
 											string value = keyValue[1];
 
-											switch( keyValue[0])
+											switch( key )
 											{
 												case "method":
 												case "teamID":
@@ -287,7 +287,7 @@ namespace LofleEditor
 
 												case "provisioningProfiles":
 													var provisioningProfiles = plist.root.CreateDict( key );
-													var provisioningProfilesKeyValue = value.Split( '-' );
+													var provisioningProfilesKeyValue = value.Split( '@' );
 													provisioningProfiles.SetString( provisioningProfilesKeyValue[0], provisioningProfilesKeyValue[1] );
 													break;
 											}
