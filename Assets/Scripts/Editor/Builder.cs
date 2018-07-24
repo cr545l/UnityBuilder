@@ -251,13 +251,18 @@ namespace LofleEditor
 								}
 								break;
 
-							case "-plists":
+							case "-plist":
 								{
+									string path = string.Format( "{0}{1}.plist", Constant.Path.Project, "exportOptionsPlist" );
+									var plist = new UnityEditor.iOS.Xcode.PlistDocument();
+
+									if( System.IO.File.Exists( path ) )
+									{
+										System.IO.File.Delete( path );
+									}
+
 									try
 									{
-										string path = string.Format( "{0}{1}.plist", Constant.Path.Project, "exportOptionsPlist" );
-										var plist = new UnityEditor.iOS.Xcode.PlistDocument();
-
 										string[] dicts = argValue.Split( ',' );
 										foreach( var dict in dicts )
 										{
@@ -287,12 +292,12 @@ namespace LofleEditor
 													break;
 											}
 										}
-										plist.WriteToFile( path );
 									}
 									catch( Exception e )
 									{
 										Debug.LogWarning( e.ToString() );
 									}
+									plist.WriteToFile( path );
 								}
 								break;
 						}
