@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.Text;
+using System;
 
 #if UNITY_2018
 using UnityEditor.Build.Reporting;
@@ -160,7 +161,7 @@ namespace LofleEditor
 			Debug.Log( log );
 #else
 			Debug.LogFormat( "Result : {0}", buildReport.ToString() );
-			if( null != buildReport )
+			if( null != buildReport && string.Empty != buildReport )
 			{
 				throw new System.Exception( buildReport );
 			}
@@ -232,9 +233,71 @@ namespace LofleEditor
 								}
 								break;
 
-							case "-keyaliasPass":
+							case "-AndroidSdkRoot":
 								{
-									PlayerSettings.Android.keyaliasPass = argValue;
+									EditorPrefs.SetString( "AndroidSdkRoot", argValue );
+								}
+								break;
+
+							case "-AndroidNdkRoot":
+								{
+									EditorPrefs.SetString( "AndroidNdkRoot", argValue );
+								}
+								break;
+
+							case "-JdkPath":
+								{
+									EditorPrefs.SetString( "JdkPath", argValue );
+								}
+								break;
+
+							case "-plist":
+								{
+									string path = string.Format( "{0}{1}.plist", Constant.Path.Project, "exportOptionsPlist" );
+									var plist = new UnityEditor.iOS.Xcode.PlistDocument();
+
+									if( System.IO.File.Exists( path ) )
+									{
+										System.IO.File.Delete( path );
+									}
+
+									try
+									{
+										string[] dicts = argValue.Split( ',' );
+										foreach( var dict in dicts )
+										{
+											string[] keyValue = dict.Split( ':' );
+
+											string key = keyValue[0];
+											string value = keyValue[1];
+
+											switch( key )
+											{
+												case "method":
+												case "teamID":
+												case "signingStyle":
+												case "signingCertificate":
+													plist.root.SetString( key, value );
+													break;
+
+												case "compileBitcode":
+												case "ITSAppUsesNonExemptEncryption":
+													plist.root.SetBoolean( key, bool.Parse( value ) );
+													break;
+
+												case "provisioningProfiles":
+													var provisioningProfiles = plist.root.CreateDict( key );
+													var provisioningProfilesKeyValue = value.Split( '@' );
+													provisioningProfiles.SetString( provisioningProfilesKeyValue[0], provisioningProfilesKeyValue[1] );
+													break;
+											}
+										}
+									}
+									catch( Exception e )
+									{
+										Debug.LogWarning( e.ToString() );
+									}
+									plist.WriteToFile( path );
 								}
 								break;
 						}
@@ -243,11 +306,11 @@ namespace LofleEditor
 					{
 						switch( arg )
 						{
-							case "-createPlists":
-								{
-									CreatePlists();
-								}
-								break;
+							//case "-createPlists":
+							//	{
+							//		CreatePlists();
+							//	}
+							//	break;
 
 							case "-mono":
 								{
