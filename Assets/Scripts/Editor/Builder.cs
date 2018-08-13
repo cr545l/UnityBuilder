@@ -300,6 +300,24 @@ namespace LofleEditor
 									plist.WriteToFile( path );
 								}
 								break;
+
+							case "-JdkPath":
+								{
+									EditorPrefs.SetString( "JdkPath", argValue );
+								}
+								break;
+
+							case "-AndroidSdkRoot":
+								{
+									EditorPrefs.SetString( "AndroidSdkRoot", argValue );
+								}
+								break;
+
+							case "-AndroidNdkRoot":
+								{
+									EditorPrefs.SetString( "AndroidNdkRoot", argValue );
+								}
+								break;
 						}
 					}
 					else
