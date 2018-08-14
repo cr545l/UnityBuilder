@@ -2,6 +2,7 @@
 using UnityEditor;
 using System.Text;
 using System;
+using System.Collections.Generic;
 
 #if UNITY_2018
 using UnityEditor.Build.Reporting;
@@ -127,6 +128,17 @@ namespace LofleEditor
 
 		private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
 		{
+			List<String> errors = new List<String>();
+			Application.logMessageReceived += (contition, stackTrace, type)=>{
+				switch(type)
+				{
+					case LogType.Exception:
+					case LogType.Assert:
+					case LogType.Error:
+						errors.Add(string.Format("[{0}] {1}\n\n{2}\n",type, contition, stackTrace));
+					break;
+				}
+			};
 			EditorUserBuildSettings.SwitchActiveBuildTarget( buildTargetGroup, buildTarget );
 
 			// 2018부터 BuildReport로 리턴하도록 변경 됨
@@ -163,6 +175,11 @@ namespace LofleEditor
 			Debug.LogFormat( "Result : {0}", buildReport.ToString() );
 			if( null != buildReport && string.Empty != buildReport )
 			{
+				foreach(var error in errors)
+				{
+					Debug.Log(error);
+				}
+
 				throw new System.Exception( buildReport );
 			}
 #endif
