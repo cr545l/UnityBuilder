@@ -319,16 +319,11 @@ namespace LofleEditor
 								break;
 						}
 					}
-					else
+					
+                                        if( i < args.Length )
 					{
 						switch( arg )
 						{
-							//case "-createPlists":
-							//	{
-							//		CreatePlists();
-							//	}
-							//	break;
-
 							case "-mono":
 								{
 									PlayerSettings.SetScriptingBackend( buildTargetGroup, ScriptingImplementation.Mono2x );
