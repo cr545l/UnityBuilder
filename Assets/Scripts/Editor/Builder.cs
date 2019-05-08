@@ -267,7 +267,28 @@ namespace LofleEditor
 									EditorPrefs.SetString( "JdkPath", argValue );
 								}
 								break;
+								
+							case "-ScriptingImplementation":
+								{
+									ScriptingImplementation scriptingImplementation = default(ScriptingImplementation);
+									switch(argValue)
+									{
+                                                                                case "mono2x":
+											scriptingImplementation = ScriptingImplementation.Mono2x;
+                                                                                        break;
 
+                                                                                case "il2cpp":
+                                                                                        scriptingImplementation = ScriptingImplementation.IL2CPP;
+                                                                                        break;
+
+                                                                                case "winrtdotnet":
+                                                                                        scriptingImplementation = ScriptingImplementation.WinRTDotNET;
+                                                                                        break;
+									}
+									PlayerSettings.SetScriptingBackend( buildTargetGroup, ScriptingImplementation.Mono2x );
+								}
+								break;
+								
 							case "-plist":
 								{
 									string path = string.Format( "{0}{1}.plist", Constant.Path.Project, "exportOptionsPlist" );
@@ -315,24 +336,6 @@ namespace LofleEditor
 										Debug.LogWarning( e.ToString() );
 									}
 									plist.WriteToFile( path );
-								}
-								break;
-						}
-					}
-					
-                                        if( i < args.Length )
-					{
-						switch( arg )
-						{
-							case "-mono":
-								{
-									PlayerSettings.SetScriptingBackend( buildTargetGroup, ScriptingImplementation.Mono2x );
-								}
-								break;
-
-							case "-il2cpp":
-								{
-									PlayerSettings.SetScriptingBackend( buildTargetGroup, ScriptingImplementation.IL2CPP );
 								}
 								break;
 						}
