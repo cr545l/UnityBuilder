@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.Text;
+using System;
+using System.Collections.Generic;
 
 #if UNITY_2018
 using UnityEditor.Build.Reporting;
@@ -126,6 +128,17 @@ namespace LofleEditor
 
 		private static void InvokeBuild( string[] scenes, string targetPath, BuildTargetGroup buildTargetGroup, BuildTarget buildTarget, BuildOptions build_options )
 		{
+			List<String> errors = new List<String>();
+			Application.logMessageReceived += (contition, stackTrace, type)=>{
+				switch(type)
+				{
+					case LogType.Exception:
+					case LogType.Assert:
+					case LogType.Error:
+						errors.Add(string.Format("[{0}] {1}\n\n{2}\n",type, contition, stackTrace));
+					break;
+				}
+			};
 			EditorUserBuildSettings.SwitchActiveBuildTarget( buildTargetGroup, buildTarget );
 
 			// 2018부터 BuildReport로 리턴하도록 변경 됨
@@ -160,8 +173,13 @@ namespace LofleEditor
 			Debug.Log( log );
 #else
 			Debug.LogFormat( "Result : {0}", buildReport.ToString() );
-			if( null != buildReport )
+			if( null != buildReport && string.Empty != buildReport )
 			{
+				foreach(var error in errors)
+				{
+					Debug.Log(error);
+				}
+
 				throw new System.Exception( buildReport );
 			}
 #endif
@@ -232,18 +250,6 @@ namespace LofleEditor
 								}
 								break;
 
-							case "-keyaliasPass":
-								{
-									PlayerSettings.Android.keyaliasPass = argValue;
-								}
-								break;
-
-							case "-JdkPath":
-								{
-									EditorPrefs.SetString( "JdkPath", argValue );
-								}
-								break;
-
 							case "-AndroidSdkRoot":
 								{
 									EditorPrefs.SetString( "AndroidSdkRoot", argValue );
@@ -255,27 +261,81 @@ namespace LofleEditor
 									EditorPrefs.SetString( "AndroidNdkRoot", argValue );
 								}
 								break;
-						}
-					}
-					else
-					{
-						switch( arg )
-						{
-							case "-createPlists":
+
+							case "-JdkPath":
 								{
-									CreatePlists();
+									EditorPrefs.SetString( "JdkPath", argValue );
 								}
 								break;
-
-							case "-mono":
+								
+							case "-ScriptingImplementation":
 								{
+									ScriptingImplementation scriptingImplementation = default(ScriptingImplementation);
+									switch(argValue)
+									{
+                                                                                case "mono2x":
+											scriptingImplementation = ScriptingImplementation.Mono2x;
+                                                                                        break;
+
+                                                                                case "il2cpp":
+                                                                                        scriptingImplementation = ScriptingImplementation.IL2CPP;
+                                                                                        break;
+
+                                                                                case "winrtdotnet":
+                                                                                        scriptingImplementation = ScriptingImplementation.WinRTDotNET;
+                                                                                        break;
+									}
 									PlayerSettings.SetScriptingBackend( buildTargetGroup, ScriptingImplementation.Mono2x );
 								}
 								break;
-
-							case "-il2cpp":
+								
+							case "-plist":
 								{
-									PlayerSettings.SetScriptingBackend( buildTargetGroup, ScriptingImplementation.IL2CPP );
+									string path = string.Format( "{0}{1}.plist", Constant.Path.Project, "exportOptionsPlist" );
+									var plist = new UnityEditor.iOS.Xcode.PlistDocument();
+
+									if( System.IO.File.Exists( path ) )
+									{
+										System.IO.File.Delete( path );
+									}
+
+									try
+									{
+										string[] dicts = argValue.Split( ',' );
+										foreach( var dict in dicts )
+										{
+											string[] keyValue = dict.Split( ':' );
+
+											string key = keyValue[0];
+											string value = keyValue[1];
+
+											switch( key )
+											{
+												case "method":
+												case "teamID":
+												case "signingStyle":
+												case "signingCertificate":
+													plist.root.SetString( key, value );
+													break;
+
+												case "compileBitcode":
+												case "ITSAppUsesNonExemptEncryption":
+													plist.root.SetBoolean( key, bool.Parse( value ) );
+													break;
+
+												case "provisioningProfiles":
+													var provisioningProfiles = plist.root.CreateDict( key );
+													var provisioningProfilesKeyValue = value.Split( '@' );
+													provisioningProfiles.SetString( provisioningProfilesKeyValue[0], provisioningProfilesKeyValue[1] );
+													break;
+											}
+										}
+									}
+									catch( Exception e )
+									{
+										Debug.LogWarning( e.ToString() );
+									}
+									plist.WriteToFile( path );
 								}
 								break;
 						}
