@@ -143,7 +143,7 @@ namespace LofleEditor
 
 			// 2018부터 BuildReport로 리턴하도록 변경 됨
 			var buildReport = BuildPipeline.BuildPlayer( scenes, targetPath, buildTarget, build_options );
-#if UNITY_2018_OR_NEWER
+#if UNITY_2018_1_OR_NEWER
 			Debug.LogFormat( "Result : {0}", buildReport.summary.result );
 
 			StringBuilder log = new StringBuilder();
